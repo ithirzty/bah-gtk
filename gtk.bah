@@ -2,7 +2,7 @@
 
 //libs
 #linux {
-    #cLib "w $(pkg-config --cflags --libs gtk4)"
+    #cLib "w $(pkg-config --cflags gtk4)" "w $(pkg-config --libs gtk4)"
 }
 
 #include "<gtk/gtk.h>"
@@ -15,6 +15,8 @@
 #define! GtkApplication ptr
 #define! GtkWindow ptr
 #define! GtkAdjustment ptr
+#define! GtkBuilder ptr
+#define! GtkBuilderScope ptr
 
 //type assertions
 #define! G_CALLBACK(fn ptr) ptr
@@ -42,6 +44,7 @@
 #define! gtk_window_set_child(w ptr, w GtkWidget*)
 #define! gtk_window_destroy(w GtkWindow*)
 #define! gtk_window_present(w GtkWindow*)
+#define! gtk_window_set_application(w GtkWindow*, app GtkApplication*)
 
 //adjustements
 #define! gtk_adjustment_new(v float, l float, u float, si float, pi float, ps float) GtkAdjustment*
@@ -50,6 +53,7 @@
 #define! gtk_widget_set_hexpand(w GtkWidget*, v bool)
 #define! gtk_widget_set_vexpand(w GtkWidget*, v bool)
 #define! gtk_widget_set_size_request(w GtkWidget*, w int, h int)
+#define! gtk_widget_show(w GtkWidget*)
 
 //button
 #define! gtk_button_new_with_label(t cpstring) GtkWidget*
@@ -79,6 +83,14 @@
 //activation function
 #define GtkAppActivate(app GtkApplication*, data gpointer)
 
+//builder functions
+#define! gtk_builder_new() GtkBuilder*
+#define! gtk_builder_new_from_file(path cpstring) GtkBuilder*
+#define! gtk_builder_add_from_file(b GtkBuilder*, path cpstring, error ptr)
+#define! gtk_builder_get_object(b GtkBuilder*, name cpstring) ptr
+#define! gtk_builder_get_scope(b GtkBuilder*) GtkBuilderScope*
+#define! gtk_builder_cscope_add_callback_symbol(b GtkBuilderScope*, name cpstring, sym ptr)
+
 //orientation
 #define gtkOrientation int
 const orientationVertical = <gtkOrientation>0
@@ -104,6 +116,51 @@ struct gtkAdjustment {
         this.adj = gtk_adjustment_new(v,l,u,si,pi,ps)
     }
 }
+
+struct gtkBuilder {
+    builder: GtkBuilder*
+    scope: GtkBuilderScope*
+    
+    newBuilder() gtkBuilder* {
+        this.builder = gtk_builder_new()
+        return this
+    }
+
+    addAllCalbacks() {
+        if this.scope == null {
+            this.scope = gtk_builder_get_scope(this.builder)
+        }
+        i=0; for i < len(__Bah_fnNames), i++ {
+            fn = __Bah_fnNames[i]
+            gtk_builder_cscope_add_callback_symbol(this.scope, fn.n, fn.p)
+        }
+    }
+
+    addFromFile(path cpstring) gtkBuilder* {
+        gtk_builder_add_from_file(this.builder, path, null)
+        return this
+    }
+
+    newFromFile(path cpstring) gtkBuilder* {
+        this.newBuilder()
+        this.addAllCalbacks()
+        this.addFromFile(path)
+        return this
+    }
+
+    getObject(name cpstring) ptr {
+        return gtk_builder_get_object(this.builder, name)
+    }
+
+    addCallbackSymbol(name cpstring, fn ptr) {
+        if this.scope == null {
+            this.scope = gtk_builder_get_scope(this.builder)
+        }
+        gtk_builder_cscope_add_callback_symbol(this.scope, name, fn)
+    }
+
+}
+
 
 //widgets
 struct gtkWidget {
@@ -214,6 +271,8 @@ struct gtkWidget {
     }
 }
 
+#define getWApp(a ptr) ptr
+
 //window
 struct gtkWindow {
     window: GtkWindow*
@@ -236,6 +295,18 @@ struct gtkWindow {
 
     destroy() {
         gtk_window_destroy(this.window)
+    }
+
+    setApplication(app ptr) {
+        gtk_window_set_application(this.window, getWApp(app))
+    }
+
+    show() {
+        gtk_widget_show(<ptr>this.window)
+    }
+
+    newFromBuilder(b gtkBuilder*, name cpstring) {
+        this.window = b.getObject(name)
     }
 
 }
@@ -265,4 +336,9 @@ struct gtkApp {
 GtkAppActivate(app GtkApplication*, data gpointer) {
     gapp = <gtkApp*>data
     gapp.activate()
+}
+
+getWApp(a ptr) ptr {
+    app gtkApp* = a
+    return app.app
 }

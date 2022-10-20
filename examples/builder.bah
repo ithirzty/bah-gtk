@@ -1,0 +1,31 @@
+// Translated from C to Bah (source: https://docs.gtk.org/gtk4/getting_started.html).
+// Compile with: 'bah builder.bah -d'.
+
+#import "../gtk.bah"
+#import "iostream.bah"
+
+//Note that the function name is referenced in the .glade file, you will not need to add the callback manually.
+win = new gtkWindow
+
+test1(btn gtkWidget*) {
+    println("hello world!")
+    win.destroy()
+}
+
+activate(app gtkApp*) {
+    builder = new gtkBuilder
+    builder.newFromFile("./ui.glade")
+
+    win.newFromBuilder(builder, "main_window")
+    win.setApplication(app)
+
+    win.present()
+}
+
+main(args []cpstring) int {
+    app = new gtkApp {
+        activate: activate
+    }
+    app.run("org.bah.test")
+    return 0
+}
