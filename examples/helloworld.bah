@@ -1,0 +1,34 @@
+// Translated from C to Bah (source: https://docs.gtk.org/gtk4/getting_started.html).
+// Compile with: 'bah helloworld.bah -d'.
+
+#import "../gtk.bah"
+#import "iostream.bah"
+
+test1(btn gtkWidget*, win gtkWindow*) {
+    println("hello world!")
+    win.destroy()
+}
+
+activate(app gtkApp*) {
+    win = app.newWindow()
+    win.setTitle("Hello")
+
+    btn = new gtkWidget
+    box = new gtkWidget
+
+    btn.buttonWithLabel("Hello World").signalConnect("clicked", test1, win)
+
+    box.newBox(orientationVertical, null).boxAppend(btn)
+    
+    win.setChild(box)
+
+    win.present()
+}
+
+main(args []cpstring) int {
+    app = new gtkApp {
+        activate: activate
+    }
+    app.run("org.bah.test")
+    return 0
+}

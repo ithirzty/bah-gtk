@@ -1,0 +1,32 @@
+// Custom text view example.
+// Compile with: 'bah text.bah -d'.
+
+#import "../gtk.bah"
+#import "iostream.bah"
+
+
+activate(app gtkApp*) {
+    win = app.newWindow()
+    win.setTitle("Text")
+
+    text = new gtkWidget
+    vp = new gtkWidget
+
+
+    text.newTextView().textViewSetEditable(true)
+
+    vp.newScrolledWindow().scrolledWindowSetChild(text)
+    vp.setSizeRequest(300, 100)
+
+    win.setChild(vp)
+
+    win.present()
+}
+
+main(args []cpstring) int {
+    app = new gtkApp {
+        activate: activate
+    }
+    app.run("org.bah.test")
+    return 0
+}

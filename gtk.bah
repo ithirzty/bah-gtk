@@ -1,0 +1,268 @@
+#import "iostream.bah"
+
+//libs
+#linux {
+    #cLib "w $(pkg-config --cflags --libs gtk4)"
+}
+
+#include "<gtk/gtk.h>"
+
+#define! g_print(s cpstring)
+
+//types
+#define! GtkWidget ptr
+#define! gpointer ptr
+#define! GtkApplication ptr
+#define! GtkWindow ptr
+#define! GtkAdjustment ptr
+
+//type assertions
+#define! G_CALLBACK(fn ptr) ptr
+#define! G_APPLICATION(a GtkApplication*) ptr
+#define! GTK_WINDOW(w GtkWindow*) ptr
+#define! GTK_BOX(w GtkWidget*) ptr
+#define! GTK_GRID(w GtkWidget*) ptr
+#define! GTK_TEXT_VIEW(w GtkWidget*) ptr
+#define! GTK_VIEWPORT(w GtkWidget*) ptr
+#define! GTK_SCROLLED_WINDOW(w GtkWidget*) ptr
+
+//application
+#define! gtk_application_new(n cpstring, flags ptr) GtkApplication*
+#define! gtk_application_window_new(app GtkApplication*) GtkWindow*
+#define! g_application_run(app ptr, argc int, argv cpstring*) int
+
+//singaling/managing
+#define! g_object_unref(p ptr)
+#define! g_signal_connect_swapped(a ptr, an cpstring, cb ptr, args ptr)
+#define! g_signal_connect(a ptr, an cpstring, cb ptr, args ptr)
+
+//window
+#define! gtk_window_set_title(w GtkWindow*, t cpstring)
+#define! gtk_window_set_default_size (w GtkWindow*, h int, w int)
+#define! gtk_window_set_child(w ptr, w GtkWidget*)
+#define! gtk_window_destroy(w GtkWindow*)
+#define! gtk_window_present(w GtkWindow*)
+
+//adjustements
+#define! gtk_adjustment_new(v float, l float, u float, si float, pi float, ps float) GtkAdjustment*
+
+//widgets
+#define! gtk_widget_set_hexpand(w GtkWidget*, v bool)
+#define! gtk_widget_set_vexpand(w GtkWidget*, v bool)
+#define! gtk_widget_set_size_request(w GtkWidget*, w int, h int)
+
+//button
+#define! gtk_button_new_with_label(t cpstring) GtkWidget*
+
+//box
+#define! gtk_box_new(or int, arg ptr) GtkWidget*
+#define! gtk_box_append(b ptr, c GtkWidget*)
+
+//grid
+#define! gtk_grid_new() GtkWidget*
+#define! gtk_grid_attach(g ptr, c GtkWidget*, x int, y int, w int, h int)
+
+//text view
+#define! gtk_text_view_new() GtkWidget*
+#define! gtk_text_view_set_cursor_visible(w ptr, v bool)
+#define! gtk_text_view_set_editable(w ptr, v bool)
+
+//viewport
+#define! gtk_viewport_new(adjH GtkAdjustment*, adjV GtkAdjustment*) GtkWidget*
+#define! gtk_viewport_set_child(w ptr, c GtkWidget*)
+#define! gtk_viewport_set_scroll_to_focus(w ptr, v bool)
+
+//scrolled window
+#define! gtk_scrolled_window_new() GtkWidget*
+#define! gtk_scrolled_window_set_child(c ptr, w GtkWidget*)
+
+//activation function
+#define GtkAppActivate(app GtkApplication*, data gpointer)
+
+//orientation
+#define gtkOrientation int
+const orientationVertical = <gtkOrientation>0
+const orientationHorizontal = <gtkOrientation>1
+
+//callback
+struct gtkCallBackArgs {
+    fn: function(ptr, ptr)
+    widget: ptr
+    arg: ptr
+}
+
+gtkCallback(w GtkWidget*, data gpointer) {
+    cba gtkCallBackArgs* = data
+    fn = cba.fn
+    fn(cba.widget, cba.arg)
+}
+
+struct gtkAdjustment {
+    adj: GtkAdjustment*
+
+    newAdjustment(v float, l float, u float, si float, pi float, ps float) {
+        this.adj = gtk_adjustment_new(v,l,u,si,pi,ps)
+    }
+}
+
+//widgets
+struct gtkWidget {
+    widget: GtkWidget*
+
+    //settings
+    setHexpand(v bool) {
+        gtk_widget_set_hexpand(this.widget, v)
+    }
+    setVexpand(v bool) {
+        gtk_widget_set_vexpand(this.widget, v)
+    }
+    setSizeRequest(w int, h int) {
+        gtk_widget_set_size_request(this.widget, w, h)
+    }
+
+    //button
+    buttonWithLabel(t cpstring) gtkWidget* {
+        this.widget = gtk_button_new_with_label(t)
+        return this
+    }
+
+    //callbacks
+    signalConnect(s cpstring, cb ptr, arg ptr) {
+        cba = new gtkCallBackArgs {
+            fn: cb
+            widget: this
+            arg: arg
+        }
+        g_signal_connect(this.widget, s, G_CALLBACK(gtkCallback), cba)
+    }
+
+    signalConnectSwapped(s cpstring, cb ptr, arg ptr) {
+        cba = new gtkCallBackArgs {
+            fn: cb
+            widget: this
+            arg: arg
+        }
+        g_signal_connect_swapped(this.widget, s, G_CALLBACK(gtkCallback), cba)
+    }
+
+    //box
+    newBox(or gtkOrientation, arg ptr) gtkWidget* {
+        if or == orientationVertical {
+            this.widget = gtk_box_new(noCheck(GTK_ORIENTATION_VERTICAL), arg)
+        } else if or == orientationHorizontal {
+            this.widget = gtk_box_new(noCheck(GTK_ORIENTATION_HORIZONTAL), arg)
+        }
+        return this
+    }
+
+    boxAppend(w gtkWidget*) {
+        gtk_box_append(GTK_BOX(this.widget), w.widget)
+    }
+
+    //grid
+    newGrid() gtkWidget* {
+        this.widget = gtk_grid_new()
+        return this
+    }
+
+    gridAttach(widget gtkWidget*, x int, y int, w int, h int) {
+        gtk_grid_attach(GTK_GRID(this.widget), widget.widget, x, y, w, h)
+    }
+
+    //text view
+    newTextView() gtkWidget* {
+        this.widget = gtk_text_view_new()
+        return this
+    }
+
+    textViewSetEditable(v bool) {
+        gtk_text_view_set_editable(GTK_TEXT_VIEW(this.widget), v)
+    }
+
+    textViewSetCursorVisible(v bool) {
+        gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(this.widget), v)
+    }
+
+    //viewport
+    newViewport(adjH gtkAdjustment*, adjV gtkAdjustment*) gtkWidget* {
+        if adjH == null {
+            adjH = new gtkAdjustment
+        }
+        if adjV == null {
+            adjV = new gtkAdjustment
+        }
+        this.widget = gtk_viewport_new(adjH.adj, adjV.adj)
+        return this
+    }
+
+    viewportSetChild(w gtkWidget*) {
+        gtk_viewport_set_child(GTK_VIEWPORT(this.widget), w.widget)
+    }
+
+    viewportSetScrollToFocus(v bool) {
+        gtk_viewport_set_scroll_to_focus(GTK_VIEWPORT(this.widget), v)
+    }
+
+    //scrolled window
+    newScrolledWindow() gtkWidget* {
+        this.widget = gtk_scrolled_window_new()
+        return this
+    }
+
+    scrolledWindowSetChild(w gtkWidget*) {
+        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(this.widget), w.widget)
+    }
+}
+
+//window
+struct gtkWindow {
+    window: GtkWindow*
+
+    setTitle(t cpstring) {
+        gtk_window_set_title(GTK_WINDOW(this.window), t)
+    }
+
+    setDefaultSize(w int, h int) {
+        gtk_window_set_default_size(GTK_WINDOW(this.window), w, h)
+    }
+
+    setChild(w gtkWidget*) {
+        gtk_window_set_child(GTK_WINDOW(this.window), w.widget)
+    }
+
+    present() {
+        gtk_window_present(GTK_WINDOW(this.window))
+    }
+
+    destroy() {
+        gtk_window_destroy(this.window)
+    }
+
+}
+
+//app
+struct gtkApp {
+    app: GtkApplication*
+    windows: []gtkWindow*
+
+    run(name cpstring) {
+        this.app = gtk_application_new(name, noCheck(G_APPLICATION_FLAGS_NONE))
+        g_signal_connect(this.app, "activate", G_CALLBACK(GtkAppActivate), this)
+        g_application_run(G_APPLICATION(this.app), 0, null)
+        g_object_unref(this.app)
+    }
+
+    newWindow() gtkWindow* {
+        w = new gtkWindow
+        w.window = gtk_application_window_new(this.app)
+        return w
+    }
+
+    activate: function(gtkApp*)
+}
+
+//activation function
+GtkAppActivate(app GtkApplication*, data gpointer) {
+    gapp = <gtkApp*>data
+    gapp.activate()
+}

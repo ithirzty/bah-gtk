@@ -1,0 +1,49 @@
+// Translated from C to Bah (source: https://docs.gtk.org/gtk4/getting_started.html).
+// Compile with: 'bah packing.bah -d'.
+
+#import "../gtk.bah"
+#import "iostream.bah"
+
+test1(btn gtkWidget*, a ptr) {
+    println("button 1 clicked")
+}
+
+test2(btn gtkWidget*, a ptr) {
+    println("button 2 clicked")
+}
+
+test3(btn gtkWidget*, win gtkWindow*) {
+    win.destroy()
+}
+
+
+activate(app gtkApp*) {
+    win = app.newWindow()
+    win.setTitle("Grid")
+
+    grid = new gtkWidget
+    button1 = new gtkWidget
+    button2 = new gtkWidget
+    buttonq = new gtkWidget
+
+    grid.newGrid()
+    win.setChild(grid)
+
+    button1.buttonWithLabel("Button 1").signalConnect("clicked", test1, null)
+    button2.buttonWithLabel("Button 2").signalConnect("clicked", test2, null)
+    buttonq.buttonWithLabel("Quit").signalConnect("clicked", test3, win)
+
+    grid.gridAttach(button1, 0, 0, 1, 1)
+    grid.gridAttach(button2, 1, 0, 1, 1)
+    grid.gridAttach(buttonq, 0, 1, 2, 1)
+
+    win.present()
+}
+
+main(args []cpstring) int {
+    app = new gtkApp {
+        activate: activate
+    }
+    app.run("org.bah.test")
+    return 0
+}

@@ -1,0 +1,9 @@
+
+    <svg xmlns="http://www.w3.org/2000/svg" width="316" height="55" stroke="#000" font-size="15">
+    <rect fill="#212121" width="100%" height="100%" rx="7" />
+    <g stroke="none">
+            <text fill="grey" font-family="monospace" xml:space="preserve" x="5" y="20">#import</text><text fill="#dad7da" font-family="monospace" xml:space="preserve" x="68" y="20"> </text><text fill="#f88750" font-family="monospace" xml:space="preserve" x="77" y="20">"ithirzty/bah-gtk/gtk.bah"</text><text fill="#549b36" font-family="monospace" xml:space="preserve" x="5" y="35">// Bindings imstalled with BPM</text>
+    </g>
+</svg>
+
+    
